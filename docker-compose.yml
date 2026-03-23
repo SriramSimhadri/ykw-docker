@@ -1,0 +1,29 @@
+services:
+
+  postgres:
+    image: postgres:18
+    container_name: ykw-postgres18
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
+  
+  redis:
+    image: redis:7.2-alpine
+    container_name: ykw-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
+volumes:
+  pgdata:
+  redisdata:
