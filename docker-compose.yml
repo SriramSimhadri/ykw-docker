@@ -2,28 +2,115 @@ services:
 
   postgres:
     image: postgres:18
-    container_name: ykw-postgres18
+    container_name: ykw-postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql
       - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
-  
+    networks:
+      - ykw-network
+
   redis:
     image: redis:7.2-alpine
     container_name: ykw-redis
     restart: always
+    command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "6379:6379"
     volumes:
       - redisdata:/data
-    command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - ykw-network
+
+  ykw-api-gateway:
+    image: ghcr.io/sriramsimhadri/ykw-api-gateway:a6e702c
+    container_name: ykw-api-gateway
+    restart: always
+    depends_on:
+      - ykw-auth-service
+      - ykw-profile-service
+    ports:
+      - "8080:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Downstream services
+      AUTH_SERVICE_URL: http://ykw-auth-service:8090
+      PROFILE_SERVICE_URL: http://ykw-profile-service:8091
+      ARTICLE_SERVICE_URL: http://ykw-article-service:8092
+      LIKES_SERVICE_URL: http://ykw-likes-service:8093
+      COMMENTS_SERVICE_URL: http://ykw-comments-service:8094
+      FOLLOWS_SERVICE_URL: http://ykw-follows-service:8095
+
+    volumes:
+      - ./logs:/app/logs
+
+    networks:
+      - ykw-network
+
+  ykw-auth-service:
+    image: ghcr.io/sriramsimhadri/ykw-auth-service:a6e702c
+    container_name: ykw-auth-service
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+
+      DB_URL: jdbc:postgresql://postgres:5432/user_db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      AUTH_SERVICE_URL: http://ykw-auth-service:8090
+      INTERNAL_TOKEN: ${GATEWAY_SECRET_ONLY}
+
+    volumes:
+      - ./logs:/app/logs
+
+    networks:
+      - ykw-network
+
+  ykw-profile-service:
+    image: ghcr.io/sriramsimhadri/ykw-profile-service:a6e702c
+    container_name: ykw-profile-service
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+
+      DB_URL: jdbc:postgresql://postgres:5432/profile_db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      AUTH_SERVICE_URL: http://ykw-auth-service:8090
+
+    volumes:
+      - ./logs:/app/logs
+
+    networks:
+      - ykw-network
 
 volumes:
   pgdata:
   redisdata:
+
+networks:
+  ykw-network:
+    driver: bridge
