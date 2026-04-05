@@ -73,14 +73,25 @@ services:
 
   # YKW AUTH SERVICE 
   ykw-auth-service:
-    image: ghcr.io/sriramsimhadri/ykw-auth-service:latest
+    image: ykw-auth-service:1.0.1
     container_name: ykw-auth-service
     restart: always
     depends_on:
       - postgres
       - redis
+      - otel-collector
     environment:
       SPRING_PROFILES_ACTIVE: prod
+
+      # OpenTelemetry
+      JAVA_TOOL_OPTIONS: >
+        -javaagent:/otel/opentelemetry-javaagent.jar
+        -Dotel.service.name=ykw-auth-service
+        -Dotel.exporter.otlp.endpoint=http://otel-collector:4317
+        -Dotel.exporter.otlp.protocol=grpc
+        -Dotel.traces.exporter=otlp
+        -Dotel.metrics.exporter=otlp
+        -Dotel.logs.exporter=none
 
       DB_URL: jdbc:postgresql://postgres:5432/user_db
       DB_USER: postgres
@@ -94,6 +105,7 @@ services:
 
     volumes:
       - ./logs:/app/logs
+      - ./infra/otel/opentelemetry-javaagent.jar:/otel/opentelemetry-javaagent.jar
 
     networks:
       - ykw-network
