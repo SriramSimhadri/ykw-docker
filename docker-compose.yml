@@ -5,8 +5,8 @@ services:
     container_name: ykw-postgres
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     ports:
       - "5432:5432"
@@ -28,20 +28,34 @@ services:
     networks:
       - ykw-network
 
+  # YKW API GATEWAY
   ykw-api-gateway:
-    image: ghcr.io/sriramsimhadri/ykw-api-gateway:a6e702c
+    image: ykw-api-gateway:1.0.1
     container_name: ykw-api-gateway
     restart: always
     depends_on:
       - ykw-auth-service
       - ykw-profile-service
+      - otel-collector
     ports:
       - "8080:8081"
     environment:
       SPRING_PROFILES_ACTIVE: prod
+
+      # OpenTelemetry
+      JAVA_TOOL_OPTIONS: >
+        -javaagent:/otel/opentelemetry-javaagent.jar
+        -Dotel.service.name=ykw-api-gateway
+        -Dotel.exporter.otlp.endpoint=http://otel-collector:4317
+        -Dotel.exporter.otlp.protocol=grpc
+        -Dotel.traces.exporter=otlp
+        -Dotel.metrics.exporter=otlp
+        -Dotel.logs.exporter=none
+
       # Redis
       REDIS_HOST: redis
       REDIS_PORT: 6379
+
       # Downstream services
       AUTH_SERVICE_URL: http://ykw-auth-service:8090
       PROFILE_SERVICE_URL: http://ykw-profile-service:8091
@@ -52,12 +66,14 @@ services:
 
     volumes:
       - ./logs:/app/logs
+      - ./infra/otel/opentelemetry-javaagent.jar:/otel/opentelemetry-javaagent.jar
 
     networks:
       - ykw-network
 
+  # YKW AUTH SERVICE 
   ykw-auth-service:
-    image: ghcr.io/sriramsimhadri/ykw-auth-service:a6e702c
+    image: ghcr.io/sriramsimhadri/ykw-auth-service:latest
     container_name: ykw-auth-service
     restart: always
     depends_on:
@@ -67,8 +83,8 @@ services:
       SPRING_PROFILES_ACTIVE: prod
 
       DB_URL: jdbc:postgresql://postgres:5432/user_db
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_USER: postgres
+      DB_PASSWORD: postgres
 
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -83,7 +99,7 @@ services:
       - ykw-network
 
   ykw-profile-service:
-    image: ghcr.io/sriramsimhadri/ykw-profile-service:a6e702c
+    image: ghcr.io/sriramsimhadri/ykw-profile-service:latest
     container_name: ykw-profile-service
     restart: always
     depends_on:
@@ -93,8 +109,8 @@ services:
       SPRING_PROFILES_ACTIVE: prod
 
       DB_URL: jdbc:postgresql://postgres:5432/profile_db
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_USER: postgres
+      DB_PASSWORD: postgres
 
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -104,6 +120,48 @@ services:
     volumes:
       - ./logs:/app/logs
 
+    networks:
+      - ykw-network
+
+  # OTEL COLLECTOR
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./infra/otel/otel-collector-config.yaml:/etc/otelcol/config.yaml
+    ports:
+      - "4317:4317"
+      - "9464:9464"
+    networks:
+      - ykw-network
+
+  # JAEGER for traces
+  jaeger:
+    image: jaegertracing/all-in-one:1.54
+    container_name: jaeger
+    ports:
+      - "16686:16686"
+    networks:
+      - ykw-network
+
+  # PROMETHEUS for metrics
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - ykw-network
+
+  # GRAFANA for visualization
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
     networks:
       - ykw-network
 
