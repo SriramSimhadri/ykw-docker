@@ -17,4 +17,11 @@ scrape_configs:
           - localhost
         labels:
           job: ykw-app
-          __path__: /var/log/app/*.log
+          __path__: /var/logs/ykw-app/*.log
+
+    pipeline_stages:
+      - regex:
+          expression: '/var/logs/ykw-app/(?P<service>.*)\.log'
+      - labels:
+          service:
+    
