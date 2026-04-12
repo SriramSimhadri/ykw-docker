@@ -49,6 +49,7 @@ services:
         -Dotel.exporter.otlp.protocol=grpc
         -Dotel.traces.exporter=otlp
         -Dotel.metrics.exporter=otlp
+        -Dotel.logs.exporter=otlp
         -Dotel.instrumentation.logback-mdc.enabled=true 
     # correlate with traces 
         
@@ -90,6 +91,7 @@ services:
         -Dotel.exporter.otlp.protocol=grpc
         -Dotel.traces.exporter=otlp
         -Dotel.metrics.exporter=otlp
+        -Dotel.logs.exporter=otlp
         -Dotel.instrumentation.logback-mdc.enabled=true
 
       DB_URL: jdbc:postgresql://postgres:5432/user_db
@@ -127,6 +129,7 @@ services:
         -Dotel.exporter.otlp.protocol=grpc
         -Dotel.traces.exporter=otlp
         -Dotel.metrics.exporter=otlp
+        -Dotel.logs.exporter=otlp
         -Dotel.instrumentation.logback-mdc.enabled=true
         
       DB_URL: jdbc:postgresql://postgres:5432/profile_db

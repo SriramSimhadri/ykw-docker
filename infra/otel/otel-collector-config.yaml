@@ -5,11 +5,21 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
+  filelog:
+    include:
+      #- /var/log/containers/*.log   # Kubernetes
+      # OR
+      - /var/lib/docker/containers/*/*.log   # Docker
 
 processors:
   batch:
 
 exporters:
+  otlphttp/loki:
+    endpoint: "http://loki:3100/otlp"
+    tls:
+      insecure: true
+
   otlp/tempo:
     endpoint: tempo:4317
     tls:
@@ -29,3 +39,8 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [prometheus]
+    
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/loki]

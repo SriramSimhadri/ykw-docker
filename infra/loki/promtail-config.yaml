@@ -17,7 +17,7 @@ scrape_configs:
           - localhost
         labels:
           job: ykw-app
-          __path__: /var/logs/ykw-app/*.log
+          __path__: /var/lib/docker/containers/*/*.log
 
     pipeline_stages:
       - regex:
