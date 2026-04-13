@@ -21,6 +21,7 @@ services:
       - ./monitoring/tempo:/var/tempo
     ports:
       - "3200:3200"
+      - "4318:4318"
     networks:
       - ykw-network
 
