@@ -50,7 +50,8 @@ services:
         -Dotel.traces.exporter=otlp
         -Dotel.metrics.exporter=otlp
         -Dotel.logs.exporter=otlp
-        -Dotel.instrumentation.logback-mdc.enabled=true 
+        -Dotel.instrumentation.logback-mdc.enabled=true
+
     # correlate with traces 
         
       # Redis
@@ -131,7 +132,7 @@ services:
         -Dotel.metrics.exporter=otlp
         -Dotel.logs.exporter=otlp
         -Dotel.instrumentation.logback-mdc.enabled=true
-        
+                
       DB_URL: jdbc:postgresql://postgres:5432/profile_db
       DB_USER: postgres
       DB_PASSWORD: postgres

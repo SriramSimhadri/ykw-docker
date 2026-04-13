@@ -13,14 +13,32 @@ receivers:
 
 processors:
   batch:
+  # transform:
+  #   log_statements:
+  #     - context: log
+  #       statements:
+  #         # 1. This parses the JSON string in the body and creates attributes
+  #         - merge_maps(log.attributes, ParseJSON(log.body), "upsert") where IsMatch(log.body, "^\\{")
+
+  #         # 2. This fixes the Grafana display. 
+  #         # It replaces "event" with the actual event name (like UPDATE_PROFILE_SUCCESS)
+  #         - set(log.body, log.attributes["event"]) where log.attributes["event"] != nil
+          
+  #         # 3. If "event" is missing, use "message" (but only if body was "event")
+  #         - set(log.body, log.attributes["message"]) where log.attributes["message"] != nil and log.body == "event"
+
 
 exporters:
-  otlphttp/loki:
+
+  debug:
+    verbosity: detailed
+
+  otlp_http/loki:
     endpoint: "http://loki:3100/otlp"
     tls:
       insecure: true
 
-  otlp/tempo:
+  otlp_grpc/tempo:
     endpoint: tempo:4317
     tls:
       insecure: true
@@ -33,7 +51,7 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp/tempo]
+      exporters: [otlp_grpc/tempo]
 
     metrics:
       receivers: [otlp]
@@ -42,5 +60,5 @@ service:
     
     logs:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [otlphttp/loki]
+      processors: [transform, batch]
+      exporters: [otlp_http/loki, debug]
