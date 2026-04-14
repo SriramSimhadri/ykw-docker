@@ -13,6 +13,21 @@ receivers:
 
 processors:
   batch:
+  filter/metrics:
+    metrics:
+      include:
+        match_type: regexp
+        metric_names:
+          - http_server_requests_seconds.*
+          - jvm_memory_used_bytes
+          - jvm_gc_pause_seconds
+          - process_cpu_usage
+  transform:
+    metric_statements:
+      - context: metric
+        statements:
+          - set(name, "http_requests") where name == "http_server_requests_seconds_count"
+
   # transform:
   #   log_statements:
   #     - context: log
@@ -55,7 +70,7 @@ service:
 
     metrics:
       receivers: [otlp]
-      processors: [batch]
+      processors: [filter/metrics, transform, batch]
       exporters: [prometheus]
     
     logs:

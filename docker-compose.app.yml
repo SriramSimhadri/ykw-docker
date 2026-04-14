@@ -65,6 +65,7 @@ services:
       LIKES_SERVICE_URL: http://ykw-likes-service:8093
       COMMENTS_SERVICE_URL: http://ykw-comments-service:8094
       FOLLOWS_SERVICE_URL: http://ykw-follows-service:8095
+      OTEL_METRICS_URL: http://otel-collector:4318/v1/metrics
 
     volumes:
       - ./logs:/app/logs
@@ -104,6 +105,7 @@ services:
 
       AUTH_SERVICE_URL: http://ykw-auth-service:8090
       INTERNAL_TOKEN: ${GATEWAY_SECRET_ONLY}
+      OTEL_METRICS_URL: http://otel-collector:4318/v1/metrics
 
     volumes:
       - ./logs:/app/logs
@@ -141,6 +143,7 @@ services:
       REDIS_PORT: 6379
 
       AUTH_SERVICE_URL: http://ykw-auth-service:8090
+      OTEL_METRICS_URL: http://otel-collector:4318/v1/metrics
 
     volumes:
       - ./logs:/app/logs
