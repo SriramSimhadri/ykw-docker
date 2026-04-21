@@ -15,11 +15,11 @@ fi
 
 # Stop observability stack
 
-if docker compose -f docker-compose.observability.yml ps -q | grep -q .; then
-    echo "Stopping observability containers..."
-    docker compose -f docker-compose.observability.yml down
-else
-    echo "No observability containers running"
-fi
+#if docker compose -f docker-compose.observability.yml ps -q | grep -q .; then
+#    echo "Stopping observability containers..."
+#    docker compose -f docker-compose.observability.yml down
+#else
+#    echo "No observability containers running"
+#fi
 
 echo "Cleanup complete"
